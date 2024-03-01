@@ -142,6 +142,7 @@ class InitCommand(base.CharmcraftCommand):
         parser.add_argument(
             "--images",
             nargs="+",
+            default=[],
             help="Provide an image to have as the workload of the charm, as workload_name=image_url",
         )
 
@@ -174,7 +175,7 @@ class InitCommand(base.CharmcraftCommand):
                 "and contain only alphanumeric characters and hyphens."
             )
 
-        if parsed_args.profile == "custom" and not parsed_args.images:
+        if parsed_args.profile == "custom" and parsed_args.images is None:
             raise CraftError(
                 "Using the custom charm profile requires at least one image."
                 "You can provide an image you'd like to use with  or simply use the simple "

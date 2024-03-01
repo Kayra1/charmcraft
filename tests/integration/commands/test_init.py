@@ -74,10 +74,17 @@ def init_command():
 
 
 def create_namespace(
-    *, name="my-charm", author="J Doe", force=False, profile=commands.init.DEFAULT_PROFILE
+    *,
+    name="my-charm",
+    author="J Doe",
+    force=False,
+    profile=commands.init.DEFAULT_PROFILE,
+    images=[],
 ):
     """Helper to create a valid namespace."""
-    return argparse.Namespace(name=name, author=author, force=force, profile=profile)
+    return argparse.Namespace(
+        name=name, author=author, force=force, profile=profile, images=images
+    )
 
 
 @pytest.mark.parametrize(
