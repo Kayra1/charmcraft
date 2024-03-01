@@ -34,6 +34,7 @@ except ImportError:
 # the available profiles and in which directory the template can be found
 PROFILES = {
     "simple": "init-simple",
+    "custom": "init-custom",
     "kubernetes": "init-kubernetes",
     "machine": "init-machine",
 }
@@ -50,6 +51,11 @@ Available profiles are:
     simple:
         A basic kubernetes charm with lot of texts helping the developer
         to navigate their first charm by following the instructions.
+
+    custom:
+        A basic kubernetes charm that will attempt to create a charm as close
+        to working as possible by deploying a given container image. This profile
+        will create a charm that will NOT work immediately.
 
     kubernetes:
         A basic Kubernetes charm with example container.
@@ -133,6 +139,11 @@ class InitCommand(base.CharmcraftCommand):
             default=DEFAULT_PROFILE,
             help=f"Use the specified project profile (defaults to '{DEFAULT_PROFILE}')",
         )
+        parser.add_argument(
+            "--images",
+            nargs="+",
+            help="Provide an image to have as the workload of the charm, as workload_name=image_url",
+        )
 
     def run(self, parsed_args: argparse.Namespace):
         """Execute command's actual functionality."""
@@ -163,11 +174,33 @@ class InitCommand(base.CharmcraftCommand):
                 "and contain only alphanumeric characters and hyphens."
             )
 
+        if parsed_args.profile == "custom" and not parsed_args.images:
+            raise CraftError(
+                "Using the custom charm profile requires at least one image."
+                "You can provide an image you'd like to use with  or simply use the simple "
+                "profile to create a charm with a preselected workload."
+            )
+        requested_images = []
+        for image_argument in parsed_args.images:
+            if image_argument.find("=") == -1:
+                raise CraftError(
+                    "Unable to parse image argument. Expected format: workload_name=image_url"
+                )
+            image_name, image_url = image_argument.split("=")
+            if not re.match(r"[a-z][a-z0-9-]*[a-z0-9]$", image_name):
+                raise CraftError(
+                    f"{image_name} is not a valid name for a workload. "
+                    "The name must start with a lowercase letter "
+                    "and contain only alphanumeric characters and underscores."
+                )
+            requested_images.append((image_name, image_url))
+
         context = {
             "name": parsed_args.name,
             "author": parsed_args.author,
             "year": date.today().year,
             "class_name": "".join(re.split(r"\W+", parsed_args.name.title())) + "Charm",
+            "images": requested_images,
         }
 
         template_directory = PROFILES[parsed_args.profile]
