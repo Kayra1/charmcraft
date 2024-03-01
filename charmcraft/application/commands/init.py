@@ -15,6 +15,7 @@
 # For further info, check https://github.com/canonical/charmcraft
 
 """Infrastructure for the 'init' command."""
+
 import argparse
 import os
 import pathlib
@@ -122,7 +123,9 @@ class InitCommand(base.CharmcraftCommand):
 
     def fill_parser(self, parser):
         """Specify command's specific parameters."""
-        parser.add_argument("--name", help="The name of the charm; defaults to the directory name")
+        parser.add_argument(
+            "--name", help="The name of the charm; defaults to the directory name"
+        )
         parser.add_argument(
             "--author",
             help="The charm author; defaults to the current user name per GECOS",
@@ -148,7 +151,9 @@ class InitCommand(base.CharmcraftCommand):
 
     def run(self, parsed_args: argparse.Namespace):
         """Execute command's actual functionality."""
-        init_dirpath = pathlib.Path(self._global_args.get("project_dir") or ".").resolve()
+        init_dirpath = pathlib.Path(
+            self._global_args.get("project_dir") or "."
+        ).resolve()
         if not init_dirpath.exists():
             init_dirpath.mkdir(parents=True)
         elif any(init_dirpath.iterdir()) and not parsed_args.force:
@@ -181,6 +186,13 @@ class InitCommand(base.CharmcraftCommand):
                 "You can provide an image you'd like to use with  or simply use the simple "
                 "profile to create a charm with a preselected workload."
             )
+
+        if parsed_args.profile != "custom" and parsed_args.images is not None:
+            raise CraftError(
+                "You've provided images but didn't use the custom profile."
+                "They will be ignored."
+            )
+
         requested_images = []
         for image_argument in parsed_args.images:
             if image_argument.find("=") == -1:
